@@ -1,10 +1,23 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\TaskController; // ← Tambahkan ini
+use App\Http\Controllers\TaskController;
+use Illuminate\Support\Facades\Auth;
 
-Route::get('/selamat-datang', function () {
-    return 'Selamat datang di proyek Magang!';
+// Redirect halaman root ke login
+Route::get('/', function () {
+    return redirect('/login');
 });
 
-Route::resource('tasks', TaskController::class); // ← Dan ini
+// Proteksi semua route 'tasks' agar hanya bisa diakses setelah login
+Route::middleware(['auth'])->group(function () {
+    Route::resource('tasks', TaskController::class);
+});
+
+// Routing untuk fitur login, register, dll
+Auth::routes();
+
+// Setelah login, langsung arahkan ke /tasks daripada /home
+Route::get('/home', function () {
+    return redirect('/tasks');
+});
