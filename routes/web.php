@@ -21,3 +21,11 @@ Auth::routes();
 Route::get('/home', function () {
     return redirect('/tasks');
 });
+
+Route::get('/tasks', [TaskController::class, 'index'])
+    ->middleware('auth')
+    ->name('tasks');
+
+Route::get('/admin/tasks', [TaskController::class, 'adminIndex'])
+    ->middleware(['auth', 'admin'])
+    ->name('admin.tasks');
