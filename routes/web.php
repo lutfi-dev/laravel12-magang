@@ -29,3 +29,10 @@ Route::get('/tasks', [TaskController::class, 'index'])
 Route::get('/admin/tasks', [TaskController::class, 'adminIndex'])
     ->middleware(['auth', 'admin'])
     ->name('admin.tasks');
+
+Route::middleware(['auth'])->group(function () {
+    // Rute resource untuk task
+    Route::resource('tasks', TaskController::class);
+});
+
+Route::get('/tasks', [TaskController::class, 'index'])->name('tasks');
