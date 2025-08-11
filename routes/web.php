@@ -9,30 +9,19 @@ Route::get('/', function () {
     return redirect('/login');
 });
 
-// Proteksi semua route 'tasks' agar hanya bisa diakses setelah login
-Route::middleware(['auth'])->group(function () {
-    Route::resource('tasks', TaskController::class);
-});
-
 // Routing untuk fitur login, register, dll
 Auth::routes();
-
-// Setelah login, langsung arahkan ke /tasks daripada /home
 Route::get('/home', function () {
-    return redirect('/tasks');
+    return redirect()->route('tasks.index');
 });
 
-Route::get('/tasks', [TaskController::class, 'index'])
-    ->middleware('auth')
-    ->name('tasks');
-
-Route::get('/admin/tasks', [TaskController::class, 'adminIndex'])
-    ->middleware(['auth', 'admin'])
-    ->name('admin.tasks');
-
+// Route untuk user (hanya melihat daftar tugas)
 Route::middleware(['auth'])->group(function () {
-    // Rute resource untuk task
-    Route::resource('tasks', TaskController::class);
+    Route::get('/tasks', [TaskController::class, 'index'])->name('tasks.index');
 });
 
-Route::get('/tasks', [TaskController::class, 'index'])->name('tasks');
+// Route untuk admin (daftar tugas + CRUD)
+Route::middleware(['auth', 'admin'])->group(function () {
+    Route::get('/admin/tasks', [TaskController::class, 'adminIndex'])->name('admin.tasks');
+    Route::resource('tasks', TaskController::class)->except(['index']); // CRUD untuk admin, kecuali index
+});
