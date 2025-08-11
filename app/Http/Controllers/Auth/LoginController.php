@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Foundation\Auth\AuthenticatesUsers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -18,7 +17,8 @@ class LoginController extends Controller
 
         if (Auth::attempt($credentials)) {
             $request->session()->regenerate();
-            return redirect()->route('tasks');
+            // Arahkan berdasarkan role
+            return redirect()->route('tasks.index'); // User ke /tasks
         }
 
         return back()->withErrors(['email' => 'Login gagal!']);
@@ -37,7 +37,7 @@ class LoginController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        // Arahkan ke halaman login atau home
+        // Arahkan ke halaman login
         return redirect('/login');
     }
 }
