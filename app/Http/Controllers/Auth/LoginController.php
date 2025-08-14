@@ -10,22 +10,13 @@ class LoginController extends Controller
 {
     public function login(Request $request)
     {
-        // Validasi termasuk captcha
         $credentials = $request->validate([
             'email' => 'required|email',
             'password' => 'required',
-            'g-recaptcha-response' => 'required|captcha',
-        ], [
-            'g-recaptcha-response.required' => 'Captcha wajib diisi.',
-            'g-recaptcha-response.captcha' => 'Captcha tidak valid, silakan coba lagi.',
         ]);
 
-        if (Auth::attempt([
-            'email' => $credentials['email'],
-            'password' => $credentials['password'],
-        ])) {
+        if (Auth::attempt($credentials)) {
             $request->session()->regenerate();
-
             // Arahkan berdasarkan role
             return redirect()->route('tasks.index'); // User ke /tasks
         }
