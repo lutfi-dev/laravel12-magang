@@ -5,39 +5,83 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 class LoginController extends Controller
 {
     public function login(Request $request)
     {
+
+        // Cek apakah user sudah melebihi batas login
+        $this->checkRateLimit($request);
+
+        // Validasi input termasuk Google reCAPTCHA
         $credentials = $request->validate([
             'email' => 'required|email',
             'password' => 'required',
         ]);
 
-        if (Auth::attempt($credentials)) {
+
+        // Coba login
+        if (Auth::attempt([
+            'email' => $credentials['email'],
+            'password' => $credentials['password'],
+        ])) {
+            // Jika berhasil login → reset percobaan
+            RateLimiter::clear($this->throttleKey($request));
             $request->session()->regenerate();
-            // Arahkan berdasarkan role
-            return redirect()->route('tasks.index'); // User ke /tasks
+
+            return redirect()->route('tasks.index');
         }
 
-        return back()->withErrors(['email' => 'Login gagal!']);
+        // Jika login gagal → tambah hitungan percobaan
+        RateLimiter::hit($this->throttleKey($request), 60); // 60 detik blokir
+
+        return back()->withErrors([
+            'email' => 'Login gagal! Email atau password salah.'
+        ]);
+    }
+
+    protected function checkRateLimit(Request $request)
+    {
+        $maxAttempts = 1; // Maksimal percobaan login
+        $decaySeconds = 60; // Lama blokir dalam detik
+
+        if (!RateLimiter::tooManyAttempts($this->throttleKey($request), $maxAttempts)) {
+            return;
+
+        }
+
+        // Reset hitungan supaya mulai blokir dari sekarang
+        RateLimiter::clear($this->throttleKey($request));
+        RateLimiter::hit($this->throttleKey($request), $decaySeconds);
+
+        $seconds = $decaySeconds;
+
+        throw ValidationException::withMessages([
+            'email' => ["Terlalu banyak percobaan login. Coba lagi dalam {$seconds} detik."]
+        ]);
+    }
+
+    protected function throttleKey(Request $request)
+    {
+        // Kombinasi email dan IP agar unik
+        return Str::lower($request->input('email')) . '|' . $request->ip();
     }
 
     public function showLoginForm()
     {
-        return view('auth.login'); // Pastikan file resources/views/auth/login.blade.php ada
+        return view('auth.login');
     }
 
     public function logout(Request $request)
     {
         Auth::logout();
-
-        // Hapus session
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        // Arahkan ke halaman login
         return redirect('/login');
     }
 }
