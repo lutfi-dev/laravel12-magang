@@ -91,4 +91,3 @@
         </div>
     </div>
 @endsection
-login.blade
