@@ -13,6 +13,7 @@ class LoginController extends Controller
 {
     public function login(Request $request)
     {
+
         // Cek apakah user sudah melebihi batas login
         $this->checkRateLimit($request);
 
@@ -20,11 +21,8 @@ class LoginController extends Controller
         $credentials = $request->validate([
             'email' => 'required|email',
             'password' => 'required',
-            'g-recaptcha-response' => 'required|captcha',
-        ], [
-            'g-recaptcha-response.required' => 'Captcha wajib diisi.',
-            'g-recaptcha-response.captcha' => 'Captcha tidak valid, silakan coba lagi.',
         ]);
+
 
         // Coba login
         if (Auth::attempt([
@@ -53,6 +51,7 @@ class LoginController extends Controller
 
         if (!RateLimiter::tooManyAttempts($this->throttleKey($request), $maxAttempts)) {
             return;
+
         }
 
         // Reset hitungan supaya mulai blokir dari sekarang
